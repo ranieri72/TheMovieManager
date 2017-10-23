@@ -36,25 +36,24 @@ class TMDBClient : NSObject {
     func taskForGETMethod(_ method: String, parameters: [String:AnyObject], completionHandlerForGET: @escaping (_ result: AnyObject?, _ error: NSError?) -> Void) -> URLSessionDataTask {
         
         /* 1. Set the parameters */
-        var parametersWithApiKey = parameters;
-        parametersWithApiKey[ParameterKeys.ApiKey] = Constants.ApiKey as AnyObject?;
+        var parametersWithApiKey = parameters
+        parametersWithApiKey[ParameterKeys.ApiKey] = Constants.ApiKey as AnyObject?
         
         /* 2/3. Build the URL, Configure the request */
-        let request = URLRequest(url: TMDBClient.tmdbURLFromParameters(parameters as [String:AnyObject], withPathExtension: method));
+        let request = NSMutableURLRequest(url: TMDBClient.tmdbURLFromParameters(parametersWithApiKey, withPathExtension: method))
         
         /* 4. Make the request */
-        let task = session.dataTask(with: request) { (data, response, error) in
+        let task = session.dataTask(with: request as URLRequest) { (data, response, error) in
             
-            // if an error occurs, print it and re-enable the UI
             func sendError(_ error: String) {
-                print(error);
-                let userInfo = [NSLocalizedDescriptionKey : error];
-                completionHandlerForGET(nil, NSError(domain: "taskForGetMethod", code : 1, userInfo: userInfo));
+                print(error)
+                let userInfo = [NSLocalizedDescriptionKey : error]
+                completionHandlerForGET(nil, NSError(domain: "taskForGETMethod", code: 1, userInfo: userInfo))
             }
             
             /* GUARD: Was there an error? */
             guard (error == nil) else {
-                sendError("There was an error with your request: \(error!)")
+                sendError("There was an error with your request: \(String(describing: error))")
                 return
             }
             
@@ -70,13 +69,14 @@ class TMDBClient : NSObject {
                 return
             }
             
-            self.convertDataWithCompletionHandler(data, completionHandlerForConvertData: completionHandlerForGET);
+            /* 5/6. Parse the data and use the data (happens in completion handler) */
+            self.convertDataWithCompletionHandler(data, completionHandlerForConvertData: completionHandlerForGET)
         }
         
         /* 7. Start the request */
-        task.resume();
+        task.resume()
         
-        return task;
+        return task
     }
     
     // MARK: POST
